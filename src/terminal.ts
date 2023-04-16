@@ -34,11 +34,22 @@ function ensureDisposed() {
 async function insertVariables(command: string, resource?: string) {
     const resourceResult = insertVariable(command, 'resource', resource);
     const clipboardResult = insertVariable(resourceResult.command, 'clipboard', await vscode.env.clipboard.readText());
+    const currentPosition = vscode.window?.activeTextEditor?.selection.active;
+    const lineResult = insertVariable(
+        clipboardResult.command, 'line', currentPosition ? String(currentPosition.line + 1): ''
+    );
+    const columnResult = insertVariable(
+        lineResult.command, 'column', currentPosition ? String(currentPosition.character + 1): ''
+    );
 
     return {
-        command: clipboardResult.command,
-        successful: resourceResult.successful && clipboardResult.successful
-    };
+        command: columnResult.command,
+        successful: resourceResult.successful &&
+                    clipboardResult.successful &&
+                    lineResult.successful &&
+                    columnResult.successful
+    }
+
 }
 
 function insertVariable(command: string, variable: string, value?: string) {
